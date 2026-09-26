@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RIVERBANK BETA 0.5 - Clean Isometric L-Wall</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --panel: #111827;
+      --panel-border: #1f293d;
+      --text: #f3f4f6;
+      --muted: #9ca3af;
+      --theme: #38bdf8;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(17, 24, 39, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(56, 189, 248, 0.08);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .math-hud-overlay {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      display: flex;
+      justify-content: flex-start;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(9, 13, 22, 0.92);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--theme);
+      border-radius: 4px;
+      padding: 4px 6px;
+      font-size: 8.5px;
+      font-family: "Courier New", Courier, monospace;
+      max-width: 95%;
+    }
+    .formula-title {
+      font-size: 6.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+      font-size: 8.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .formula-eq span.hl {
+      color: var(--theme);
+      font-weight: 900;
+    }
+
+    .boq-panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .boq-title {
+      font-size: 9.5px;
+      color: var(--theme);
+      font-family: monospace;
+      font-weight: bold;
+      text-transform: uppercase;
+    }
+    .boq-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .boq-item {
+      background: rgba(3, 7, 18, 0.6);
+      border: 1px solid var(--panel-border);
+      border-radius: 4px;
+      padding: 6px;
+      text-align: center;
+    }
+    .boq-label {
+      font-size: 7.5px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .boq-value {
+      font-size: 11px;
+      font-weight: bold;
+      color: #fff;
+      font-family: monospace;
+      margin-top: 2px;
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--theme);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 22px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 5px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 18px;
+      width: 18px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 8px var(--theme);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .pedagogy-banner {
+      background: rgba(56, 189, 248, 0.05);
+      border: 1px dashed rgba(56, 189, 248, 0.35);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      font-size: 10px;
+      color: #bae6fd;
+      font-family: monospace;
+      line-height: 1.35;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">RIVERBANK 0.5</span>
+      <strong style="font-size: 11px;">Isometric L-Wall View</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Viewport มุมมอง Isometric ชัดเจน อ่านง่าย -->
+    <div class="cad-viewport">
+      <div class="math-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">Isometric CAD Engine</div>
+          <div class="formula-eq" id="hudStatus">Status: Clean 3D Projection Active</div>
+        </div>
+      </div>
+
+      <svg id="cadStage" viewBox="0 0 600 370">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+          </marker>
+        </defs>
+        <g id="stageContent"></g>
+      </svg>
+    </div>
+
+    <!-- ตาราง BOQ -->
+    <div class="boq-panel">
+      <div class="boq-title" id="boqTitle">Pure Concrete BOQ</div>
+      <div class="boq-grid">
+        <div class="boq-item">
+          <div class="boq-label" id="lblConc">Concrete Volume (m³)</div>
+          <div class="boq-value" id="valConc">14.20</div>
+        </div>
+        <div class="boq-item">
+          <div class="boq-label" id="lblForm">Formwork Area (m²)</div>
+          <div class="boq-value" id="valForm">38.50</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- แผงควบคุมพารามิเตอร์ -->
+    <div class="control-box">
+      <div class="control-info">
+        <span id="paramLabelH">ความสูงกำแพง (Wall Height H)</span>
+        <span class="val" id="paramValH">3.5 m</span>
+      </div>
+      <input type="range" id="sliderH" min="20" max="50" value="35" oninput="onParamsChange()">
+
+      <div class="control-info" style="margin-top: 4px;">
+        <span id="paramLabelL">ความยาวหน้างาน (Wall Length L)</span>
+        <span class="val" id="paramValL">10.0 m</span>
+      </div>
+      <input type="range" id="sliderL" min="50" max="200" value="100" oninput="onParamsChange()">
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>Isometric View:</strong> ปรับมุมมองเป็นแบบไอโซเมตริก 3 มิติที่สะอาดตา มองเห็นรูปทรงกำแพงกันดินตัว L และระยะความยาวหน้างานได้อย่างชัดเจน
+    </div>
+
+  </div>
+
+  <script>
+    let lang = 'th';
+    let wallHeight = 3.5;
+    let wallLength = 10.0;
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      document.getElementById('hudStatus').innerText = lang === 'th' ? 'สถานะ: มุมมอง Isometric 3 มิติชัดเจน' : 'Status: Clean 3D Projection Active';
+      renderStage();
+    }
+
+    function onParamsChange() {
+      wallHeight = parseFloat(document.getElementById('sliderH').value) / 10.0;
+      wallLength = parseFloat(document.getElementById('sliderL').value) / 10.0;
+      
+      document.getElementById('paramValH').innerText = `${wallHeight.toFixed(1)} m`;
+      document.getElementById('paramValL').innerText = `${wallLength.toFixed(1)} m`;
+      renderStage();
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      let scaleH = wallHeight * 28;
+      let baseY = 280;
+      let wallY = baseY - scaleH;
+      
+      let startX = 180; 
+      let stemW = 28; 
+      let baseThick = 20; 
+      let baseW = 130; 
+      let depthSkewX = Math.min(140, wallLength * 12);
+      let depthSkewY = depthSkewX * 0.45; // มุมเอียง Isometric 30 องศา
+
+      let unitConc = (wallHeight * 3.8 + 1.2);
+      let totalConc = (unitConc * (wallLength / 5.0)).toFixed(2);
+      let totalForm = ((wallHeight + 2.0) * wallLength * 1.1).toFixed(2);
+
+      document.getElementById('valConc').innerText = totalConc;
+      document.getElementById('valForm').innerText = totalForm;
+
+      let svg = '';
+
+      svg += `<text x="300" y="20" fill="#38bdf8" font-size="8.5" font-weight="bold" font-family="monospace" text-anchor="middle">CLEAN ISOMETRIC L-WALL (L=${wallLength.toFixed(1)}m, H=${wallHeight.toFixed(1)}m)</text>`;
+
+      // พิกัดรูปตัดด้านหน้า (Front Profile of L-Shape)
+      // จุดที่ 1: มุมซ้ายบนผนัง
+      let f1x = startX, f1y = wallY;
+      // จุดที่ 2: มุมขวาบนผนัง
+      let f2x = startX + stemW, f2y = wallY;
+      // จุดที่ 3: มุมขวาบรรจบฐาน
+      let f3x = startX + stemW, f3y = baseY - baseThick;
+      // จุดที่ 4: ขอบขวาล่างฐาน
+      let f4x = startX + baseW, f4y = baseY - baseThick;
+      // จุดที่ 5: มุมขวาล่างสุดฐาน
+      let f5x = startX + baseW, f5y = baseY;
+      // จุดที่ 6: มุมซ้ายล่างฐาน
+      let f6x = startX, f6y = baseY;
+
+      // พิกัดหน้าตัดด้านหลัง (Back Profile เลื่อนตาม depthSkewX, depthSkewY)
+      let b1x = f1x - depthSkewX, b1y = f1y - depthSkewY;
+      let b2x = f2x - depthSkewX, b2y = f2y - depthSkewY;
+      let b3x = f3x - depthSkewX, b3y = f3y - depthSkewY;
+      let b4x = f4x - depthSkewX, b4y = f4y - depthSkewY;
+      let b5x = f5x - depthSkewX, b5y = f5y - depthSkewY;
+      let b6x = f6x - depthSkewX, b6y = f6y - depthSkewY;
+
+      // ประกอบร่างผิวโพลิกอนแบบ Watertight Solid ไร้รอยต่อ
+      let frontFace = `${f1x},${f1y} ${f2x},${f2y} ${f3x},${f3y} ${f4x},${f4y} ${f5x},${f5y} ${f6x},${f6y}`;
+      let topStemFace = `${f1x},${f1y} ${f2x},${f2y} ${b2x},${b2y} ${b1x},${b1y}`;
+      let topBaseFace = `${f3x},${f3y} ${f4x},${f4y} ${b4x},${b4y} ${b3x},${b3y}`;
+      let rightStemFace = `${f2x},${f2y} ${f3x},${f3y} ${b3x},${b3y} ${b2x},${b2y}`;
+      let rightBaseFace = `${f4x},${f4y} ${f5x},${f5y} ${b5x},${b5y} ${b4x},${b4y}`;
+      let backEndFace = `${f5x},${f5y} ${f6x},${f6y} ${b6x},${b6y} ${b5x},${b5y}`;
+
+      svg += `
+        <!-- ผิวด้านหลังและผิวบน -->
+        <polygon points="${backEndFace}" fill="rgba(56, 189, 248, 0.12)" stroke="#38bdf8" stroke-width="1.2"/>
+        <polygon points="${topStemFace}" fill="rgba(56, 189, 248, 0.22)" stroke="#38bdf8" stroke-width="1.5"/>
+        <polygon points="${topBaseFace}" fill="rgba(56, 189, 248, 0.18)" stroke="#38bdf8" stroke-width="1.5"/>
+        
+        <!-- ผิวด้านข้าง -->
+        <polygon points="${rightStemFace}" fill="rgba(56, 189, 248, 0.28)" stroke="#38bdf8" stroke-width="1.5"/>
+        <polygon points="${rightBaseFace}" fill="rgba(56, 189, 248, 0.32)" stroke="#38bdf8" stroke-width="1.5"/>
+        
+        <!-- ผิวหน้าตัว L ด้านหน้า -->
+        <polygon points="${frontFace}" fill="rgba(56, 189, 248, 0.42)" stroke="#38bdf8" stroke-width="2"/>
+      `;
+
+      // เส้นบอกขนาดมิติ (Dimension lines) ให้อ่านง่าย
+      svg += `
+        <!-- บอกความยาว L -->
+        <line x1="${f6x}" y1="${f6y + 12}" x2="${b6x}" y2="${b6y + 12}" stroke="#38bdf8" stroke-dasharray="2 2" marker-end="url(#arrow)"/>
+        <text x="${(f6x + b6x)/2 - 10}" y="${(f6y + b6y)/2 + 22}" fill="#38bdf8" font-size="8.5" font-family="monospace">L = ${wallLength.toFixed(1)}m</text>
+
+        <!-- บอกความสูง H -->
+        <line x1="${f1x - 15}" y1="${f1y}" x2="${f6x - 15}" y2="${f6y}" stroke="#94a3b8" stroke-dasharray="2 2"/>
+        <text x="${f1x - 22}" y="${(f1y + f6y)/2}" fill="#38bdf8" font-size="8.5" font-family="monospace" dominant-baseline="middle" text-anchor="end">H = ${wallHeight.toFixed(1)}m</text>
+      `;
+
+      container.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
