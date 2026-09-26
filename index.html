@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIAM DATA LAB - Full Option Parametric Engine</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0d1526;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --theme: #10b981;
+      --radius: 8px;
+      --phi: 1.618;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 21, 38, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #020617;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.08);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .math-hud-overlay {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: flex-start;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(3, 7, 18, 0.95);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--theme);
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 9px;
+      font-family: "Courier New", Courier, monospace;
+    }
+    .formula-title {
+      font-size: 7px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+      font-size: 9px;
+    }
+    .formula-eq span.hl {
+      color: var(--theme);
+      font-weight: 900;
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--theme);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 10px var(--theme);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .pedagogy-banner {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px dashed rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 10.5px;
+      color: #a7f3d0;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">SIAM DATA LAB</span>
+      <strong style="font-size: 11.5px;">Full Option Parametric Engine</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Viewport ทองคำ -->
+    <div class="cad-viewport">
+      <div class="math-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">Algorithmic Phase</div>
+          <div class="formula-eq">Timeline: <span class="hl" id="progressVal">0%</span></div>
+        </div>
+      </div>
+      <svg id="cadStage" viewBox="0 0 600 370">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+          </marker>
+        </defs>
+        <g id="stageContent"></g>
+      </svg>
+    </div>
+
+    <!-- แผงควบคุม Full Option -->
+    <div class="control-box">
+      <div class="control-info">
+        <span id="scrubberLabel">1. ไทม์ไลน์วงจรข้อมูล (Insert -> Traverse -> Delete)</span>
+        <span class="val" id="scrubberPercent">0%</span>
+      </div>
+      <input type="range" id="timeSlider" min="0" max="100" value="0" oninput="onScrub(this.value)">
+
+      <div class="control-info" style="margin-top: 6px;">
+        <span id="lengthLabel">2. พารามิเตอร์จำนวนโหนด (Data Length N)</span>
+        <span class="val" id="lengthVal">5 Nodes</span>
+      </div>
+      <input type="range" id="lengthSlider" min="4" max="8" value="5" oninput="onLengthChange(this.value)">
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>Full Option Engine:</strong> ผสาน Parametric Component, Spring Physics และ Algorithmic Timeline ครบวงจรอย่างไร้รอยต่อ
+    </div>
+
+  </div>
+
+  <script>
+    let lang = 'th';
+    let rawProgress = 0;
+    let dataLength = 5;
+    let animatedProgress = 0;
+
+    function getSpringProgress(target) {
+      // ถ้าลากไปสุดขอบ (0 หรือ 1) ให้ Force Snap ทันที ป้องกันปัญหาสปริงค้างไม่สุด
+      if (target <= 0.001 || target >= 0.999) {
+        animatedProgress = target;
+        return target;
+      }
+      let diff = target - animatedProgress;
+      animatedProgress += diff * 0.35; // ปรับความไวสปริงให้กระชับยิ่งขึ้น
+      return animatedProgress;
+    }
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      if (lang === 'th') {
+        document.getElementById('scrubberLabel').innerText = "1. ไทม์ไลน์วงจรข้อมูล (Insert -> Traverse -> Delete)";
+        document.getElementById('lengthLabel').innerText = "2. พารามิเตอร์จำนวนโหนด (Data Length N)";
+        document.getElementById('bannerText').innerHTML = "<strong>Full Option Engine:</strong> ผสาน Parametric Component, Spring Physics และ Algorithmic Timeline ครบวงจรอย่างไร้รอยต่อ";
+      } else {
+        document.getElementById('scrubberLabel').innerText = "1. Data Lifecycle Timeline (Insert -> Remove)";
+        document.getElementById('lengthLabel').innerText = "2. Data Length Parameter (N)";
+        document.getElementById('bannerText').innerHTML = "<strong>Full Option Engine:</strong> Integrated Parametric Components, Spring Physics, and Algorithmic Timelines seamlessly.";
+      }
+      renderStage();
+    }
+
+    function onScrub(val) {
+      rawProgress = parseFloat(val);
+      renderStage();
+    }
+
+    function onLengthChange(val) {
+      dataLength = parseInt(val);
+      document.getElementById('lengthVal').innerText = `${dataLength} Nodes`;
+      renderStage();
+    }
+
+    function createDataNodeComponent(x, y, w, h, label, value, state = 'normal') {
+      let strokeCol = "#10b981";
+      let fillCol = "rgba(16, 185, 129, 0.12)";
+      if (state === 'highlight') strokeCol = "#f59e0b";
+      if (state === 'new') {
+        strokeCol = "#3b82f6";
+        fillCol = "rgba(59, 130, 246, 0.25)";
+      }
+      const fontSizeLbl = Math.max(6, w * 0.16);
+      const fontSizeVal = Math.max(7, w * 0.22);
+      return `
+        <g transform="translate(${x}, ${y})">
+          <rect width="${w}" height="${h}" rx="4" fill="${fillCol}" stroke="${strokeCol}" stroke-width="1.8"/>
+          <text x="${w/2}" y="${h*0.38}" fill="${strokeCol}" font-size="${fontSizeLbl}" font-family="monospace" text-anchor="middle">${label}</text>
+          <text x="${w/2}" y="${h*0.78}" fill="#fff" font-size="${fontSizeVal}" font-weight="bold" font-family="monospace" text-anchor="middle">${value}</text>
+        </g>
+      `;
+    }
+
+    function createCyberCurveComponent(x1, y1, x2, y2, type = 'normal', opacity = 1) {
+      let strokeCol = "#10b981";
+      let dash = "";
+      if (type === 'dashed') {
+        strokeCol = "#f59e0b";
+        dash = 'stroke-dasharray="4 4"';
+      }
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2 + 25;
+      return `<path d="M ${x1} ${y1} Q ${midX} ${midY} ${x2} ${y2}" fill="none" stroke="${strokeCol}" stroke-width="1.8" ${dash} marker-end="url(#arrow)" opacity="${opacity}"/>`;
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      const cy = 210;
+      let svg = '';
+      
+      const springVal = getSpringProgress(rawProgress / 100);
+      const p = Math.max(0, Math.min(1, springVal));
+
+      document.getElementById('progressVal').innerText = `${Math.round(rawProgress)}%`;
+      document.getElementById('scrubberPercent').innerText = `${Math.round(rawProgress)}%`;
+
+      const nodeW = Math.max(35, Math.min(58, (480 / dataLength) - 8));
+      const nodeH = nodeW * 0.65;
+      const spacing = Math.max(12, Math.min(22, 110 / dataLength));
+      const totalNodeSpan = dataLength * nodeW + (dataLength - 1) * spacing;
+      const nodeStartX = (600 - totalNodeSpan) / 2;
+
+      let insertPhase = Math.min(1, p / 0.5);
+      let removePhase = p <= 0.5 ? 0 : (p - 0.5) / 0.5;
+
+      let expandP = Math.min(1, insertPhase * 1.5);
+      let birthP = insertPhase < 0.4 ? 0 : Math.min(1, (insertPhase - 0.4) / 0.6);
+      let linkP = insertPhase < 0.7 ? 0 : (insertPhase - 0.7) / 0.3;
+
+      let node1Offset = expandP * (spacing + 10);
+      let node0RightX = nodeStartX + nodeW;
+      let node1LeftX = nodeStartX + nodeW + spacing + node1Offset;
+      let newNodeX = node0RightX + ((node1LeftX - node0RightX) / 2) - (nodeW / 2);
+      let newNodeY = cy + 45;
+
+      svg += `<text x="300" y="35" fill="#10b981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">LINKED LIST FULL OPTION: ${p <= 0.5 ? 'PHASE 1 - INSERTION' : 'PHASE 2 - REMOVAL/PIVOT'}</text>`;
+
+      for (let i = 0; i < dataLength; i++) {
+        let nx = nodeStartX + (i * (nodeW + spacing));
+        if (i >= 1) nx += node1Offset;
+        let ny = cy;
+
+        let nodeOpacity = 1;
+        let nodeShiftY = 0;
+        if (i === 1 && removePhase > 0) {
+          nodeOpacity = Math.max(0, 1 - removePhase * 1.2);
+          nodeShiftY = removePhase * -50;
+        }
+
+        if (i < dataLength - 1) {
+          let nextNx = nodeStartX + ((i + 1) * (nodeW + spacing));
+          if (i + 1 >= 1) nextNx += node1Offset;
+
+          if (i === 0) {
+            if (linkP > 0.01 && insertPhase < 1.0) {
+              svg += createCyberCurveComponent(nx + nodeW, ny, newNodeX, newNodeY, 'normal', linkP);
+              svg += createCyberCurveComponent(newNodeX + nodeW, newNodeY, nextNx, nextNy || ny, 'normal', linkP);
+            } else if (insertPhase >= 1.0 && removePhase === 0) {
+              svg += createCyberCurveComponent(nx + nodeW, ny, newNodeX, newNodeY, 'normal', 1);
+              svg += createCyberCurveComponent(newNodeX + nodeW, newNodeY, nextNx, ny, 'normal', 1);
+            } else {
+              svg += createCyberCurveComponent(nx + nodeW, ny, nextNx, ny, 'normal', 1);
+            }
+          } else {
+            svg += createCyberCurveComponent(nx + nodeW, ny, nextNx, ny, 'normal', 1);
+          }
+        }
+
+        let state = i === 1 ? 'highlight' : 'normal';
+        svg += createDataNodeComponent(nx, ny - nodeH/2 + nodeShiftY, nodeW, nodeH, `N${i}`, `[${(i+1)*10}|•]`, state);
+      }
+
+      if (birthP > 0.01 && removePhase === 0) {
+        let currentNewY = newNodeY + (1.0 - birthP) * 20;
+        let newComp = createDataNodeComponent(newNodeX, currentNewY - nodeH/2, nodeW, nodeH, "New", "[99|•]", 'new');
+        svg += `<g opacity="${birthP}">${newComp}</g>`;
+      }
+
+      if (removePhase > 0.01) {
+        let pivotX = nodeStartX + nodeW / 2;
+        let pivotY = cy - nodeH/2 - 25 - (removePhase * 15);
+        svg += `
+          <g transform="translate(${pivotX}, ${pivotY})" opacity="${removePhase}">
+            <polygon points="0,10 -6,0 6,0" fill="#f59e0b"/>
+            <text x="0" y="-5" fill="#f59e0b" font-size="8" font-weight="bold" font-family="monospace" text-anchor="middle">pivot (DEQUEUE)</text>
+          </g>
+        `;
+      }
+
+      container.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
