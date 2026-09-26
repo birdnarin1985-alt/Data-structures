@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIAM DATA LAB - Parametric UI Component Engine</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0d1526;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --theme: #3b82f6;
+      --radius: 8px;
+      --phi: 1.618;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 21, 38, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #020617;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--theme);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 10px var(--theme);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .ui-showcase-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .ui-card-demo {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .ui-card-demo:active {
+      transform: scale(0.96);
+    }
+    .ui-card-title {
+      font-size: 9px;
+      color: var(--muted);
+      font-family: monospace;
+      text-transform: uppercase;
+    }
+    .ui-card-value {
+      font-size: 14px;
+      font-weight: bold;
+      color: #fff;
+      font-family: monospace;
+    }
+
+    .pedagogy-banner {
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px dashed rgba(59, 130, 246, 0.35);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 10.5px;
+      color: #bfdbfe;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">SIAM DATA LAB</span>
+      <strong style="font-size: 11.5px;">Parametric UI Showcase</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Viewport แสดงผล UI Component แบบพาราเมตริก -->
+    <div class="cad-viewport">
+      <svg id="cadStage" viewBox="0 0 600 370">
+        <g id="stageContent"></g>
+      </svg>
+    </div>
+
+    <!-- UI Showcase Cards (โชว์เคสคอมโพเนนต์โต้ตอบ) -->
+    <div class="ui-showcase-grid">
+      <div class="ui-card-demo" onclick="triggerSpringPulse()">
+        <span class="ui-card-title">Spring Component</span>
+        <span class="ui-card-value" id="cardStateVal">Bouncy: Active</span>
+      </div>
+      <div class="ui-card-demo" onclick="cycleThemeColor()">
+        <span class="ui-card-title">Design Token Theme</span>
+        <span class="ui-card-value" id="themeVal">Cyber Blue</span>
+      </div>
+    </div>
+
+    <!-- แผงควบคุมพารามิเตอร์ UI -->
+    <div class="control-box">
+      <div class="control-info">
+        <span id="scrubberLabel">1. ปรับสเกลพารามิเตอร์ UI (Scale Factor)</span>
+        <span class="val" id="scalePercent">100%</span>
+      </div>
+      <input type="range" id="scaleSlider" min="50" max="150" value="100" oninput="onScaleChange(this.value)">
+
+      <div class="control-info" style="margin-top: 6px;">
+        <span id="lengthLabel">2. จำนวนคอมโพเนนต์ลูกข่าย (Grid N)</span>
+        <span class="val" id="gridVal">4 Items</span>
+      </div>
+      <input type="range" id="gridSlider" min="2" max="6" value="4" oninput="onGridChange(this.value)">
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>UI Parametric Engine:</strong> แปลงโฉมสถาปัตยกรรมคอมโพเนนต์ให้ควบคุมทั้งหน้าจอด้วย Token ตัวเดียว พร้อมฟิสิกส์สปริงตอบสนองทุกสัมผัส
+    </div>
+
+  </div>
+
+  <script>
+    let lang = 'th';
+    let uiScale = 1.0;
+    let gridCount = 4;
+    let currentThemeIdx = 0;
+    const themes = [
+      { name: 'Cyber Blue', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)' },
+      { name: 'Emerald BIM', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)' },
+      { name: 'Neon Purple', color: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.15)' }
+    ];
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      if (lang === 'th') {
+        document.getElementById('scrubberLabel').innerText = "1. ปรับสเกลพารามิเตอร์ UI (Scale Factor)";
+        document.getElementById('lengthLabel').innerText = "2. จำนวนคอมโพเนนต์ลูกข่าย (Grid N)";
+        document.getElementById('bannerText').innerHTML = "<strong>UI Parametric Engine:</strong> แปลงโฉมสถาปัตยกรรมคอมโพเนนต์ให้ควบคุมทั้งหน้าจอด้วย Token ตัวเดียว พร้อมฟิสิกส์สปริงตอบสนองทุกสัมผัส";
+      } else {
+        document.getElementById('scrubberLabel').innerText = "1. UI Scale Factor Parameter";
+        document.getElementById('lengthLabel').innerText = "2. Grid Component Count (N)";
+        document.getElementById('bannerText').innerHTML = "<strong>UI Parametric Engine:</strong> Control entire layouts with unified design tokens and responsive spring micro-interactions.";
+      }
+      renderStage();
+    }
+
+    function onScaleChange(val) {
+      uiScale = parseFloat(val) / 100;
+      document.getElementById('scalePercent').innerText = `${val}%`;
+      renderStage();
+    }
+
+    function onGridChange(val) {
+      gridCount = parseInt(val);
+      document.getElementById('gridVal').innerText = `${gridCount} Items`;
+      renderStage();
+    }
+
+    function triggerSpringPulse() {
+      const valEl = document.getElementById('cardStateVal');
+      valEl.innerText = "Bounce! ✨";
+      setTimeout(() => { valEl.innerText = "Bouncy: Active"; }, 400);
+    }
+
+    function cycleThemeColor() {
+      currentThemeIdx = (currentThemeIdx + 1) % themes.length;
+      let th = themes[currentThemeIdx];
+      document.documentElement.style.setProperty('--theme', th.color);
+      document.getElementById('themeVal').innerText = th.name;
+      renderStage();
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      let svg = '';
+      let th = themes[currentThemeIdx];
+
+      svg += `<text x="300" y="30" fill="${th.color}" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">PARAMETRIC UI DESIGN SYSTEM (SCALE: ${Math.round(uiScale*100)}%)</text>`;
+
+      const cardW = Math.floor(100 * uiScale);
+      const cardH = Math.floor(65 * uiScale);
+      const totalW = gridCount * (cardW + 12) - 12;
+      const startX = (600 - totalW) / 2;
+      const cy = 200;
+
+      for (let i = 0; i < gridCount; i++) {
+        let cx = startX + i * (cardW + 12);
+        let cyPos = cy - cardH / 2;
+
+        svg += `
+          <g transform="translate(${cx}, ${cyPos})">
+            <rect width="${cardW}" height="${cardH}" rx="6" fill="${th.bg}" stroke="${th.color}" stroke-width="1.8"/>
+            <text x="${cardW/2}" y="${cardH*0.35}" fill="${th.color}" font-size="${Math.max(7, cardW*0.14)}" font-weight="bold" font-family="monospace" text-anchor="middle">WIDGET [${i}]</text>
+            <text x="${cardW/2}" y="${cardH*0.72}" fill="#fff" font-size="${Math.max(9, cardW*0.2)}" font-weight="bold" font-family="monospace" text-anchor="middle">VAL: ${(i+1)*25}</text>
+          </g>
+        `;
+      }
+
+      container.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
