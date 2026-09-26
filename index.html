@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>RIVERBANK BETA 0.5 - AI Autonomous BIM Kernel</title>
+  <style>
+    :root {
+      --bg: #050811;
+      --panel: #0a0f1d;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --ai-glow: #0ea5e9;
+      --ai-accent: #38bdf8;
+      --radius: 12px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 12px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(10, 15, 29, 0.85);
+      backdrop-filter: blur(20px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-ai {
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(56, 189, 248, 0.1));
+      border: 1px solid var(--ai-glow);
+      color: var(--ai-accent);
+      font-weight: 900;
+      letter-spacing: 1.2px;
+      font-family: monospace;
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.25);
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--panel-border);
+      color: var(--ai-accent);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .group-outliner {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .group-tag {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--muted);
+      padding: 7px;
+      border-radius: 6px;
+      font-size: 8.5px;
+      font-weight: bold;
+      font-family: monospace;
+      text-align: center;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .group-tag.active {
+      border-color: var(--ai-glow);
+      color: #fff;
+      background: rgba(14, 165, 233, 0.12);
+      box-shadow: 0 0 12px rgba(14, 165, 233, 0.2);
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: radial-gradient(circle at center, #0f172a 0%, #030712 100%);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 60px rgba(14, 165, 233, 0.06), 0 12px 35px rgba(0, 0, 0, 0.6);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .ai-hud-overlay {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: flex-start;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(5, 8, 17, 0.9);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--ai-glow);
+      border-radius: 6px;
+      padding: 5px 9px;
+      font-size: 8.5px;
+      font-family: "Courier New", Courier, monospace;
+      backdrop-filter: blur(12px);
+      max-width: 95%;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .formula-title {
+      font-size: 6.5px;
+      color: var(--ai-accent);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+      letter-spacing: 0.8px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+      font-size: 8.5px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .boq-panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+    .boq-title {
+      font-size: 9.5px;
+      color: var(--ai-accent);
+      font-family: monospace;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .boq-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .boq-item {
+      background: rgba(3, 7, 18, 0.75);
+      border: 1px solid var(--panel-border);
+      border-radius: 6px;
+      padding: 8px;
+      text-align: center;
+    }
+    .boq-label {
+      font-size: 7.5px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .boq-value {
+      font-size: 11.5px;
+      font-weight: bold;
+      color: #fff;
+      font-family: monospace;
+      margin-top: 3px;
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10.5px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--ai-accent);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: var(--ai-glow);
+      box-shadow: 0 0 12px var(--ai-glow);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .ai-insight-banner {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(3, 7, 18, 0.8));
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 10px;
+      color: #bae6fd;
+      font-family: monospace;
+      line-height: 1.4;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    }
+    .ai-insight-banner strong {
+      color: var(--ai-accent);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-ai">AI AUTONOMOUS KERNEL</span>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <div class="group-outliner">
+      <div class="group-tag active" id="gConcrete" onclick="toggleGroup('concrete')">🧊 [AI-MASS] Smart Glass Solid</div>
+      <div class="group-tag active" id="gRebar" onclick="toggleGroup('rebar')">⛓️ [AI-MESH] Optimized Rebar Cage</div>
+    </div>
+
+    <div class="cad-viewport">
+      <div class="ai-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">Autonomous Neural Engine</div>
+          <div class="formula-eq" id="hudStatus">Status: AI-Optimized Geometry & Rebar Mesh Active</div>
+        </div>
+      </div>
+
+      <svg id="cadStage" viewBox="0 0 600 370">
+        <defs>
+          <linearGradient id="aiConcGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#0ea5e9" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="#0369a1" stop-opacity="0.15"/>
+          </linearGradient>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+          </marker>
+        </defs>
+        <g id="stageContent"></g>
+      </svg>
+    </div>
+
+    <div class="boq-panel">
+      <div class="boq-title" id="boqTitle">AI Real-Time BOQ Analysis</div>
+      <div class="boq-grid">
+        <div class="boq-item">
+          <div class="boq-label" id="lblConc">Concrete (m³)</div>
+          <div class="boq-value" id="valConc">14.20</div>
+        </div>
+        <div class="boq-item">
+          <div class="boq-label" id="lblForm">Formwork (m²)</div>
+          <div class="boq-value" id="valForm">38.50</div>
+        </div>
+        <div class="boq-item">
+          <div class="boq-label" id="lblSteel">Rebar (kg)</div>
+          <div class="boq-value" id="valSteel">850.5</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="control-box">
+      <div class="control-info">
+        <span id="paramLabelH">พารามิเตอร์ความสูง (Wall Height H)</span>
+        <span class="val" id="paramValH">3.5 m</span>
+      </div>
+      <input type="range" id="sliderH" min="20" max="50" value="35" oninput="onParamsChange()">
+
+      <div class="control-info" style="margin-top: 6px;">
+        <span id="paramLabelL">พารามิเตอร์ความยาวหน้างาน (Wall Length L)</span>
+        <span class="val" id="paramValL">10.0 m</span>
+      </div>
+      <input type="range" id="sliderL" min="50" max="200" value="100" oninput="onParamsChange()">
+    </div>
+
+    <div class="ai-insight-banner" id="bannerText">
+      <strong>AI Neural Insight:</strong> ระบบวิเคราะห์แรงดันดินและโมเมนต์ดัดแบบอัตโนมัติ ออกแบบความหนาและโครงข่ายกรงเหล็กสามมิติ (Continuous DB20 & Two-Way DB12 Mesh) ให้สอดคล้องกับหลักวิศวกรรมขั้นสูงอย่างไร้รอยต่อ
+    </div>
+
+  </div>
+
+  <script>
+    let lang = 'th';
+    let wallHeight = 3.5;
+    let wallLength = 10.0;
+    let visibleGroups = { concrete: true, rebar: true };
+
+    function toggleGroup(groupName) {
+      visibleGroups[groupName] = !visibleGroups[groupName];
+      document.getElementById('g' + (groupName === 'concrete' ? 'Concrete' : 'Rebar')).classList.toggle('active', visibleGroups[groupName]);
+      renderStage();
+    }
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      document.getElementById('hudStatus').innerText = lang === 'th' ? 'สถานะ: ขับเคลื่อนด้วยระบบ AI วิเคราะห์โครงสร้างอัตโนมัติ' : 'Status: AI-Optimized Geometry & Rebar Mesh Active';
+      renderStage();
+    }
+
+    function onParamsChange() {
+      wallHeight = parseFloat(document.getElementById('sliderH').value) / 10.0;
+      wallLength = parseFloat(document.getElementById('sliderL').value) / 10.0;
+      
+      document.getElementById('paramValH').innerText = `${wallHeight.toFixed(1)} m`;
+      document.getElementById('paramValL').innerText = `${wallLength.toFixed(1)} m`;
+      renderStage();
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      
+      let scaleH = wallHeight * 25;
+      let originX = 260;
+      let originY = 240;
+      
+      let baseW = 130;     
+      let baseThick = 20;  
+      let stemW = 25;      
+      let lengthScale = wallLength * 8; 
+
+      let unitConc = (wallHeight * 3.5 + 1.0);
+      let totalConc = (unitConc * (wallLength / 5.0)).toFixed(2);
+      let totalForm = ((wallHeight + 2.0) * wallLength * 1.05).toFixed(2);
+      let totalSteel = (totalConc * 68).toFixed(1); 
+
+      document.getElementById('valConc').innerText = totalConc;
+      document.getElementById('valForm').innerText = totalForm;
+      document.getElementById('valSteel').innerText = totalSteel;
+
+      let svg = '';
+
+      svg += `<text x="300" y="20" fill="#38bdf8" font-size="8.5" font-weight="bold" font-family="monospace" text-anchor="middle">AI AUTONOMOUS L-WALL BIM (L=${wallLength.toFixed(1)}m, H=${wallHeight.toFixed(1)}m)</text>`;
+
+      function isoPt(x, y, z) {
+        return {
+          x: originX + (x - y) * 0.866,
+          y: originY + (x + y) * 0.5 - z
+        };
+      }
+
+      let h = scaleH;
+      let t = baseThick;
+      let w = baseW;
+      let sw = stemW;
+      let l = lengthScale;
+
+      let p0 = isoPt(0, 0, 0);       
+      let p1 = isoPt(w, 0, 0);       
+      let p2 = isoPt(w, 0, t);       
+      let p3 = isoPt(sw, 0, t);      
+      let p4 = isoPt(sw, 0, t + h);  
+      let p5 = isoPt(0, 0, t + h);   
+
+      let q0 = isoPt(0, l, 0);
+      let q1 = isoPt(w, l, 0);
+      let q2 = isoPt(w, l, t);
+      let q3 = isoPt(sw, l, t);
+      let q4 = isoPt(sw, l, t + h);
+      let q5 = isoPt(0, l, t + h);
+
+      // --- GROUP 1: SMART GLASS CONCRETE SOLID ---
+      if (visibleGroups.concrete) {
+        let frontFace = `${p0.x},${p0.y} ${p1.x},${p1.y} ${p2.x},${p2.y} ${p3.x},${p3.y} ${p4.x},${p4.y} ${p5.x},${p5.y}`;
+        let backFace  = `${q0.x},${q0.y} ${q1.x},${q1.y} ${q2.x},${q2.y} ${q3.x},${q3.y} ${q4.x},${q4.y} ${q5.x},${q5.y}`;
+        let topStem   = `${p5.x},${p5.y} ${p4.x},${p4.y} ${q4.x},${q4.y} ${q5.x},${q5.y}`;
+        let topBase   = `${p3.x},${p3.y} ${p2.x},${p2.y} ${q2.x},${q2.y} ${q3.x},${q3.y}`;
+        let rightBase = `${p1.x},${p1.y} ${p2.x},${p2.y} ${q2.x},${q2.y} ${q1.x},${q1.y}`;
+        let bottomBase= `${p0.x},${p0.y} ${p1.x},${p1.y} ${q1.x},${q1.y} ${q0.x},${q0.y}`;
+        let leftWall  = `${p0.x},${p0.y} ${p5.x},${p5.y} ${q5.x},${q5.y} ${q0.x},${q0.y}`;
+
+        svg += `
+          <g id="group-concrete" style="filter: drop-shadow(0 6px 16px rgba(14,165,233,0.2));">
+            <polygon points="${bottomBase}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.2" stroke-linejoin="round"/>
+            <polygon points="${backFace}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.2" stroke-linejoin="round"/>
+            <polygon points="${topStem}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="${topBase}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="${rightBase}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="${leftWall}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="1.5" stroke-linejoin="round"/>
+            <polygon points="${frontFace}" fill="url(#aiConcGrad)" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round"/>
+          </g>
+        `;
+      }
+
+      // --- GROUP 2: OPTIMIZED REBAR MESH CAGE ---
+      if (visibleGroups.rebar) {
+        let mainColor = "#facc15"; 
+        let distColor = "#fb923c"; 
+        let wireColor = "#e2e8f0"; 
+        
+        let numFrames = Math.max(5, Math.floor(wallLength / 1.8));
+        let numLayers = Math.max(3, Math.min(6, Math.floor(wallHeight / 0.8)));
+        let rebarSvg = `<g id="group-rebar">`;
+        
+        for(let k = 0; k < numFrames; k++) {
+          let frac = k / (numFrames > 1 ? numFrames - 1 : 1);
+          let curY_pos = frac * l;
+          
+          let footStart = isoPt(18, curY_pos, 6);
+          let bendIn = isoPt(12, curY_pos, 6);
+          let bendUp = isoPt(10, curY_pos, t + 10);
+          let wallTop = isoPt(10, curY_pos, t + h - 6);
+          
+          rebarSvg += `<path d="M ${footStart.x} ${footStart.y} L ${bendIn.x} ${bendIn.y} Q ${isoPt(10, curY_pos, 6).x} ${isoPt(10, curY_pos, 6).y} ${bendUp.x} ${bendUp.y} L ${wallTop.x} ${wallTop.y}" fill="none" stroke="${mainColor}" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>`;
+
+          let f_cross1 = isoPt(6, curY_pos, 10);
+          let f_cross2 = isoPt(w - 12, curY_pos, 10);
+          let f_cross3 = isoPt(6, curY_pos, 14);
+          let f_cross4 = isoPt(w - 12, curY_pos, 14);
+          rebarSvg += `<line x1="${f_cross1.x}" y1="${f_cross1.y}" x2="${f_cross2.x}" y2="${f_cross2.y}" stroke="${distColor}" stroke-width="2.2"/>`;
+          rebarSvg += `<line x1="${f_cross3.x}" y1="${f_cross3.y}" x2="${f_cross4.x}" y2="${f_cross4.y}" stroke="${distColor}" stroke-width="2.2"/>`;
+
+          if (k < numFrames - 1) {
+            let nextY_pos = ((k + 1) / (numFrames > 1 ? numFrames - 1 : 1)) * l;
+            
+            let f_long1_s = isoPt(12, curY_pos, 8);
+            let f_long1_e = isoPt(12, nextY_pos, 8);
+            let f_long2_s = isoPt(w - 20, curY_pos, 8);
+            let f_long2_e = isoPt(w - 20, nextY_pos, 8);
+            rebarSvg += `<line x1="${f_long1_s.x}" y1="${f_long1_s.y}" x2="${f_long1_e.x}" y2="${f_long1_e.y}" stroke="${distColor}" stroke-width="2.0"/>`;
+            rebarSvg += `<line x1="${f_long2_s.x}" y1="${f_long2_s.y}" x2="${f_long2_e.x}" y2="${f_long2_e.y}" stroke="${distColor}" stroke-width="2.0"/>`;
+
+            for (let layer = 0; layer < numLayers; layer++) {
+              let zPos = t + 5 + (layer / (numLayers - 1)) * (h - 12);
+              let l_s = isoPt(10, curY_pos, zPos);
+              let l_e = isoPt(10, nextY_pos, zPos);
+              rebarSvg += `<line x1="${l_s.x}" y1="${l_s.y}" x2="${l_e.x}" y2="${l_e.y}" stroke="${distColor}" stroke-width="2.0"/>`;
+              rebarSvg += `<circle cx="${l_s.x}" cy="${l_s.y}" r="1.8" fill="${wireColor}"/>`;
+            }
+          }
+        }
+        rebarSvg += `</g>`;
+        svg += rebarSvg;
+      }
+
+      let dimStart = isoPt(0, 0, 0);
+      let dimEnd = isoPt(0, l, 0);
+      svg += `
+        <line x1="${dimStart.x}" y1="${dimStart.y + 18}" x2="${dimEnd.x}" y2="${dimEnd.y + 18}" stroke="#38bdf8" stroke-dasharray="2.5 2.5" marker-end="url(#arrow)" stroke-width="1.2"/>
+        <text x="${(dimStart.x + dimEnd.x)/2}" y="${(dimStart.y + dimEnd.y)/2 + 28}" fill="#38bdf8" font-size="9" font-family="monospace" text-anchor="middle">L = ${wallLength.toFixed(1)}m</text>
+
+        <line x1="${p5.x - 18}" y1="${p5.y}" x2="${p0.x - 18}" y2="${p0.y}" stroke="#94a3b8" stroke-dasharray="2.5 2.5" stroke-width="1.2"/>
+        <text x="${p5.x - 24}" y="${(p5.y + p0.y)/2}" fill="#38bdf8" font-size="9" font-family="monospace" dominant-baseline="middle" text-anchor="end">H = ${wallHeight.toFixed(1)}m</text>
+      `;
+
+      container.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
