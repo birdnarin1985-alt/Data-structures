@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIAM DATA LAB - Master-Level Computer Science & Engineering Suite</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0d1526;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --theme: #10b981;
+      --radius: 8px;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 21, 38, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* โมดูลสลับหัวข้อบทเรียน */
+    .module-nav {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+    .mod-btn {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--muted);
+      padding: 6px 2px;
+      border-radius: 6px;
+      font-size: 8.5px;
+      font-weight: bold;
+      font-family: monospace;
+      cursor: pointer;
+      text-align: center;
+      transition: 0.2s;
+    }
+    .mod-btn.active {
+      border-color: var(--theme);
+      color: #fff;
+      background: rgba(16, 185, 129, 0.15);
+      box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #020617;
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(16, 185, 129, 0.08);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .math-hud-overlay {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      right: 8px;
+      display: flex;
+      justify-content: flex-start;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(3, 7, 18, 0.95);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--theme);
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 9px;
+      font-family: "Courier New", Courier, monospace;
+    }
+    .formula-title {
+      font-size: 7px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 1px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+      font-size: 9px;
+    }
+    .formula-eq span.hl {
+      color: var(--theme);
+      font-weight: 900;
+    }
+
+    /* Contextual Radial Menu สไตล์ CAD */
+    .radial-menu {
+      position: absolute;
+      width: 140px;
+      height: 140px;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 20;
+      display: none;
+    }
+    .radial-menu.active {
+      pointer-events: auto;
+      display: block;
+      animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popIn {
+      0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    .radial-btn {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      background: rgba(13, 21, 38, 0.95);
+      border: 1.5px solid var(--theme);
+      color: #fff;
+      border-radius: 50%;
+      font-size: 9px;
+      font-weight: bold;
+      font-family: monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+      transition: 0.2s;
+    }
+    .radial-btn:hover {
+      background: var(--theme);
+      color: #030712;
+      transform: scale(1.1);
+    }
+    .rb-top { top: 0; left: 48px; }
+    .rb-left { top: 48px; left: 0; }
+    .rb-right { top: 48px; right: 0; }
+    .rb-bottom { bottom: 0; left: 48px; }
+
+    /* แผงปุ่มควบคุมแอคชัน */
+    .action-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 6px;
+    }
+    .action-btn {
+      height: 40px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      border-radius: var(--radius);
+      font-size: 10px;
+      font-weight: bold;
+      font-family: monospace;
+      cursor: pointer;
+      transition: 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .action-btn:hover {
+      border-color: var(--theme);
+      background: rgba(16, 185, 129, 0.1);
+    }
+    .action-btn.primary {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: var(--theme);
+      color: var(--theme);
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--theme);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 10px var(--theme);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .pedagogy-banner {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px dashed rgba(16, 185, 129, 0.35);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      font-size: 10.5px;
+      color: #a7f3d0;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">SIAM DATA LAB</span>
+      <strong style="font-size: 11.5px;">Master Engineering Suite</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <!-- Navigation สลับโมดูลบทเรียน -->
+    <div class="module-nav">
+      <button class="mod-btn active" id="navList" onclick="switchModule('list')">🔗 Linked List</button>
+      <button class="mod-btn" id="navStack" onclick="switchModule('stack')">📦 Stack & Queue</button>
+      <button class="mod-btn" id="navTree" onclick="switchModule('tree')">🌳 Binary Tree</button>
+      <button class="mod-btn" id="navSort" onclick="switchModule('sort')">📊 Sorting</button>
+    </div>
+
+    <!-- Viewport ทองคำ -->
+    <div class="cad-viewport" id="viewport">
+      <div class="math-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">Module Active</div>
+          <div class="formula-eq">Status: <span class="hl" id="statusVal">Interactive CAD Ready</span></div>
+        </div>
+      </div>
+
+      <svg id="cadStage" viewBox="0 0 600 370" onclick="handleBgClick(event)">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+          </marker>
+        </defs>
+        <g id="stageContent"></g>
+      </svg>
+
+      <!-- Radial Menu สำหรับ Linked List / Tree -->
+      <div class="radial-menu" id="radialMenu">
+        <div class="radial-btn rb-top" onclick="radialAction('insert')"><span>➕</span><span>Ins</span></div>
+        <div class="radial-btn rb-left" onclick="radialAction('inspect')"><span>🔍</span><span>Info</span></div>
+        <div class="radial-btn rb-right" onclick="radialAction('delete')"><span>🗑️</span><span>Del</span></div>
+        <div class="radial-btn rb-bottom" onclick="radialAction('close')"><span>❌</span><span>Close</span></div>
+      </div>
+    </div>
+
+    <!-- แผงปุ่มแอคชันเฉพาะโมดูล -->
+    <div class="action-panel" id="actionPanel">
+      <button class="action-btn primary" onclick="doPrimaryAction()">➕ Insert Node</button>
+      <button class="action-btn" onclick="doSecondaryAction()">🗑️ Remove</button>
+      <button class="action-btn" onclick="doResetAction()">🔄 Reset</button>
+    </div>
+
+    <!-- แผงควบคุมพารามิเตอร์ -->
+    <div class="control-box">
+      <div class="control-info">
+        <span id="controlLabel">พารามิเตอร์จำนวนข้อมูล (N)</span>
+        <span class="val" id="controlVal">5 Items</span>
+      </div>
+      <input type="range" id="mainSlider" min="3" max="7" value="5" oninput="onSliderChange(this.value)">
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>Siam Data Lab Full Suite:</strong> แพลตฟอร์มสื่อการสอนผสาน Parametric Components, Spring Physics และ CAD Radial Menu สำหรับวิศวกรและนักศึกษายุคใหม่
+    </div>
+
+  </div>
+
+  <script>
+    let lang = 'th';
+    let currentModule = 'list'; // list, stack, tree, sort
+    let dataLength = 5;
+    let listNodes = [10, 20, 30, 40, 50];
+    let selectedIdx = null;
+
+    // Sorting state
+    let sortArray = [45, 12, 78, 23, 56];
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      renderStage();
+    }
+
+    function switchModule(mod) {
+      currentModule = mod;
+      ['List', 'Stack', 'Tree', 'Sort'].forEach(m => {
+        document.getElementById('nav' + m).classList.toggle('active', m.toLowerCase() === mod);
+      });
+      closeRadialMenu();
+      
+      const slider = document.getElementById('mainSlider');
+      if(mod === 'sort') {
+        slider.min = 4; slider.max = 6; slider.value = 5;
+        dataLength = 5;
+        sortArray = [45, 12, 78, 23, 56];
+      } else {
+        slider.min = 3; slider.max = 7; slider.value = 5;
+        dataLength = 5;
+        listNodes = [10, 20, 30, 40, 50];
+      }
+      renderStage();
+    }
+
+    function onSliderChange(val) {
+      dataLength = parseInt(val);
+      document.getElementById('controlVal').innerText = `${dataLength} Items`;
+      if(currentModule === 'list' || currentModule === 'tree') {
+        listNodes = [];
+        for(let i=0; i<dataLength; i++) listNodes.push((i+1)*10);
+      } else if(currentModule === 'sort') {
+        sortArray = [];
+        for(let i=0; i<dataLength; i++) sortArray.push(Math.floor(Math.random()*80) + 10);
+      }
+      closeRadialMenu();
+      renderStage();
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      let svg = '';
+
+      if (currentModule === 'list') {
+        svg = renderLinkedListSVG();
+      } else if (currentModule === 'stack') {
+        svg = renderStackQueueSVG();
+      } else if (currentModule === 'tree') {
+        svg = renderBinaryTreeSVG();
+      } else if (currentModule === 'sort') {
+        svg = renderSortingSVG();
+      }
+
+      container.innerHTML = svg;
+    }
+
+    // --- 1. LINKED LIST RENDERER ---
+    function renderLinkedListSVG() {
+      const cy = 210;
+      let svg = `<text x="300" y="30" fill="#10b981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">MODULE: LINKED LIST (CAD INTERACTIVE)</text>`;
+      
+      const nodeW = Math.max(32, Math.min(54, (480 / listNodes.length) - 8));
+      const nodeH = nodeW * 0.65;
+      const spacing = Math.max(12, Math.min(22, 100 / listNodes.length));
+      const totalSpan = listNodes.length * nodeW + (listNodes.length - 1) * spacing;
+      const startX = (600 - totalSpan) / 2;
+
+      for (let i = 0; i < listNodes.length; i++) {
+        let nx = startX + (i * (nodeW + spacing));
+        let ny = cy;
+
+        if (i < listNodes.length - 1) {
+          let nextNx = startX + ((i + 1) * (nodeW + spacing));
+          const midX = (nx + nodeW + nextNx) / 2;
+          svg += `<path d="M ${nx + nodeW} ${ny} Q ${midX} ${ny + 20} ${nextNx} ${ny}" fill="none" stroke="#10b981" stroke-width="1.8" marker-end="url(#arrow)"/>`;
+        }
+
+        let isSelected = (selectedIdx === i);
+        let strokeCol = isSelected ? "#f59e0b" : "#10b981";
+        let fillCol = isSelected ? "rgba(245, 158, 11, 0.2)" : "rgba(16, 185, 129, 0.12)";
+        let pxX = nx + nodeW/2, pxY = ny;
+
+        svg += `
+          <g transform="translate(${nx}, ${ny - nodeH/2})" style="cursor: pointer;" onclick="onListNodeClick(event, ${i}, ${pxX}, ${pxY})">
+            <rect width="${nodeW}" height="${nodeH}" rx="4" fill="${fillCol}" stroke="${strokeCol}" stroke-width="${isSelected?'2.5':'1.8'}"/>
+            <text x="${nodeW/2}" y="${nodeH*0.38}" fill="${strokeCol}" font-size="${Math.max(6, nodeW*0.16)}" font-family="monospace" text-anchor="middle">N${i}</text>
+            <text x="${nodeW/2}" y="${nodeH*0.78}" fill="#fff" font-size="${Math.max(7, nodeW*0.22)}" font-weight="bold" font-family="monospace" text-anchor="middle">[${listNodes[i]}|•]</text>
+          </g>
+        `;
+      }
+      return svg;
+    }
+
+    // --- 2. STACK & QUEUE RENDERER ---
+    function renderStackQueueSVG() {
+      let svg = `<text x="300" y="30" fill="#3b82f6" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">MODULE: STACK (LIFO HYDRAULIC CYLINDER)</text>`;
+      
+      const boxW = 120, boxH = 36;
+      const startX = 240, startY = 300;
+
+      for (let i = 0; i < listNodes.length; i++) {
+        let by = startY - (i * (boxH + 6));
+        let isTop = (i === listNodes.length - 1);
+        let strokeCol = isTop ? "#f59e0b" : "#3b82f6";
+        let fillCol = isTop ? "rgba(245, 158, 11, 0.25)" : "rgba(59, 130, 246, 0.12)";
+
+        svg += `
+          <g transform="translate(${startX}, ${by})">
+            <rect width="${boxW}" height="${boxH}" rx="4" fill="${fillCol}" stroke="${strokeCol}" stroke-width="1.8"/>
+            <text x="${boxW/2}" y="${boxH*0.6}" fill="#fff" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">STACK [${listNodes[i]}]</text>
+          </g>
+        `;
+        if(isTop) {
+          svg += `<text x="${startX + boxW + 15}" y="${by + boxH/2 + 4}" fill="#f59e0b" font-size="9" font-weight="bold" font-family="monospace">← TOP (PUSH/POP)</text>`;
+        }
+      }
+      return svg;
+    }
+
+    // --- 3. BINARY TREE RENDERER ---
+    function renderBinaryTreeSVG() {
+      let svg = `<text x="300" y="30" fill="#10b981" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">MODULE: BINARY SEARCH TREE (BRANCHING NETWORK)</text>`;
+      
+      // พิกัดโหนดจำลอง 3 ชั้น (Root, Left/Right, Leaf)
+      const nodes = [
+        {val: 50, x: 300, y: 70},
+        {val: 25, x: 180, y: 150}, {val: 75, x: 420, y: 150},
+        {val: 12, x: 110, y: 230}, {val: 35, x: 250, y: 230}, {val: 65, x: 350, y: 230}, {val: 90, x: 490, y: 230}
+      ];
+      const r = 20;
+
+      const edges = [[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]];
+      edges.forEach(([p, c]) => {
+        svg += `<line x1="${nodes[p].x}" y1="${nodes[p].y}" x2="${nodes[c].x}" y2="${nodes[c].y}" stroke="#10b981" stroke-width="1.8"/>`;
+      });
+
+      nodes.forEach((n, idx) => {
+        svg += `
+          <g transform="translate(${n.x}, ${n.y})">
+            <circle r="${r}" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2"/>
+            <text x="0" y="4" fill="#fff" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${n.val}</text>
+          </g>
+        `;
+      });
+      return svg;
+    }
+
+    // --- 4. SORTING RENDERER ---
+    function renderSortingSVG() {
+      let svg = `<text x="300" y="30" fill="#f59e0b" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">MODULE: BUBBLE SORT ALGORITHM (BAR EQUALIZER)</text>`;
+      
+      const maxVal = 90;
+      const barW = 45;
+      const spacing = 20;
+      const totalW = sortArray.length * barW + (sortArray.length - 1) * spacing;
+      const startX = (600 - totalW) / 2;
+      const baseY = 290;
+
+      sortArray.forEach((val, i) => {
+        let barH = (val / maxVal) * 180;
+        let bx = startX + i * (barW + spacing);
+        let by = baseY - barH;
+
+        svg += `
+          <g transform="translate(${bx}, ${by})">
+            <rect width="${barW}" height="${barH}" rx="4" fill="rgba(245, 158, 11, 0.2)" stroke="#f59e0b" stroke-width="1.8"/>
+            <text x="${barW/2}" y="-8" fill="#f59e0b" font-size="10" font-weight="bold" font-family="monospace" text-anchor="middle">${val}</text>
+          </g>
+        `;
+      });
+      return svg;
+    }
+
+    // --- INTERACTIONS ---
+    function onListNodeClick(event, idx, svgX, svgY) {
+      event.stopPropagation();
+      selectedIdx = idx;
+      renderStage();
+
+      const viewport = document.getElementById('viewport');
+      const pxX = (svgX / 600) * viewport.clientWidth;
+      const pxY = (svgY / 370) * viewport.clientHeight;
+
+      const menu = document.getElementById('radialMenu');
+      menu.style.left = `${pxX}px`;
+      menu.style.top = `${pxY}px`;
+      menu.classList.add('active');
+    }
+
+    function handleBgClick(event) {
+      closeRadialMenu();
+    }
+
+    function closeRadialMenu() {
+      selectedIdx = null;
+      document.getElementById('radialMenu').classList.remove('active');
+      renderStage();
+    }
+
+    function radialAction(action) {
+      if(selectedIdx === null) return;
+      if(action === 'insert') {
+        let newVal = listNodes[selectedIdx] + 5;
+        listNodes.splice(selectedIdx + 1, 0, newVal);
+      } else if(action === 'delete') {
+        if(listNodes.length > 3) listNodes.splice(selectedIdx, 1);
+      } else if(action === 'inspect') {
+        alert(`Node N${selectedIdx} | Value: ${listNodes[selectedIdx]} | Memory: 0x0F${selectedIdx}A`);
+      }
+      closeRadialMenu();
+    }
+
+    function doPrimaryAction() {
+      if(currentModule === 'list') {
+        listNodes.push((listNodes.length + 1) * 10);
+      } else if(currentModule === 'stack') {
+        listNodes.push(Math.floor(Math.random() * 90) + 10);
+      } else if(currentModule === 'sort') {
+        sortArray.sort((a,b) => a - b);
+      }
+      renderStage();
+    }
+
+    function doSecondaryAction() {
+      if(currentModule === 'list' && listNodes.length > 3) {
+        listNodes.pop();
+      } else if(currentModule === 'stack' && listNodes.length > 1) {
+        listNodes.pop();
+      }
+      renderStage();
+    }
+
+    function doResetAction() {
+      switchModule(currentModule);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
