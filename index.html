@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIAM DATA LAB - 4-Step State Animation Engine</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0d1526;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --theme: #3b82f6;
+      --phi: 1.618;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 21, 38, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .model-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .switch-btn {
+      height: 44px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--muted);
+      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: bold;
+      font-family: monospace;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+      padding: 4px;
+    }
+    .switch-btn.active {
+      border-color: var(--theme);
+      color: #fff;
+      background: rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #020617;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.08);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .math-hud-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(3, 7, 18, 0.92);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--theme);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 9.5px;
+      font-family: "Courier New", Courier, monospace;
+      max-width: 65%;
+    }
+    .formula-title {
+      font-size: 7.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+    }
+    .formula-eq span.hl {
+      color: var(--theme);
+      font-weight: 900;
+    }
+
+    .tool-btn {
+      background: rgba(13, 21, 38, 0.95);
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 10px;
+      font-family: monospace;
+      font-weight: bold;
+      cursor: pointer;
+      pointer-events: auto;
+      box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    }
+    .tool-btn:active {
+      background: var(--theme);
+      color: #000;
+    }
+
+    .pedagogy-banner {
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px dashed rgba(59, 130, 246, 0.35);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 10.5px;
+      color: #bfdbfe;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+
+    .control-panel {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">SIAM DATA LAB</span>
+      <strong style="font-size: 11.5px;">4-Step State Animation Engine</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <div class="model-switch">
+      <button class="switch-btn active" id="btnArr" onclick="switchMode('array')">📦 ARRAY (Shift O(N))</button>
+      <button class="switch-btn" id="btnList" onclick="switchMode('list')">🔗 LINKED LIST (Pointer O(1))</button>
+    </div>
+
+    <div class="cad-viewport">
+      <div class="math-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">สเตทการทำงานจริง</div>
+          <div class="formula-eq" id="hudDesc">ขั้นตอน: <span class="hl" id="stepLabel">สเตจ 0 / 3</span></div>
+        </div>
+        <div class="viewport-tools">
+          <button class="tool-btn" onclick="nextStep()">⚡ ถัดไป (Next Step)</button>
+        </div>
+      </div>
+      <svg id="cadStage" viewBox="0 0 600 370"></svg>
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>คำอธิบายสเตจ:</strong> คลิกปุ่ม "ถัดไป" เพื่อจำลองการเคลื่อนที่ของข้อมูลทีละขั้นตอนอย่างละเอียด
+    </div>
+
+    <div class="control-panel" id="statusText">
+      สถานะ: เริ่มต้นระบบหน่วยความจำ (Stage 0)
+    </div>
+
+  </div>
+
+  <script>
+    let mode = 'array';
+    let lang = 'th';
+    let animStep = 0; // มี 4 สเตป: 0, 1, 2, 3
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      updateStatusText();
+      renderStage();
+    }
+
+    function switchMode(m) {
+      mode = m;
+      animStep = 0;
+      document.getElementById('btnArr').classList.toggle('active', m === 'array');
+      document.getElementById('btnList').classList.toggle('active', m === 'list');
+      updateStatusText();
+      renderStage();
+    }
+
+    function nextStep() {
+      animStep = (animStep + 1) % 4; // วนลูป 0 ถึง 3
+      updateStatusText();
+      renderStage();
+    }
+
+    function updateStatusText() {
+      const stepLabels = [
+        lang === 'th' ? "สเตจ 0: ค่าตั้งต้นปกติ" : "Stage 0: Initial State",
+        lang === 'th' ? "สเตจ 1: เตรียมแทรกข้อมูลใหม่" : "Stage 1: Prepare Insertion",
+        lang === 'th' ? mode==='array' ? "สเตจ 2: ขยับบล็อกหลังเพื่อเปิดช่อง" : "สเตจ 2: หักเหเส้นพอยเตอร์" : mode==='array' ? "Stage 2: Shifting Blocks" : "Stage 2: Re-routing Pointer",
+        lang === 'th' ? "สเตจ 3: แทรกข้อมูลสำเร็จสมบูรณ์" : "Stage 3: Insertion Complete"
+      ];
+      document.getElementById('stepLabel').innerText = stepLabels[animStep];
+      
+      const descriptions = {
+        array: [
+          lang === 'th' ? "คำอธิบาย: ข้อมูลใน Array เรียงต่อกันในหน่วยความจำอย่างเป็นระเบียบ" : "Description: Normal contiguous memory layout.",
+          lang === 'th' ? "คำอธิบาย: ต้องการแทรกค่า '99' ไว้ที่ตำแหน่ง Index [2]" : "Description: Want to insert value '99' at Index [2].",
+          lang === 'th' ? "คำอธิบาย: ข้อมูลตัวที่ 2 และ 3 ต้อง 'สไลด์ขยับถอยหลัง' ทีละช่อง (Shift Cost O(N))" : "Description: Subsequent elements must shift right (O(N) Cost).",
+          lang === 'th' ? "คำอธิบาย: แทรกสำเร็จ แต่ใช้เวลาเยอะเพราะต้องขยับข้อมูลยกแผง" : "Description: Insertion complete. High overhead due to shifts."
+        ],
+        list: [
+          lang === 'th' ? "คำอธิบาย: โหนดใน Linked List กระจัดกระจายและเกี่ยวโยงด้วยพอยเตอร์" : "Description: Nodes scattered in memory linked via pointers.",
+          lang === 'th' ? "คำอธิบาย: สร้างโหนดใหม่ '99' ขึ้นมาลอย ๆ ในหน่วยความจำ" : "Description: Allocate a new node '99' in memory.",
+          lang === 'th' ? "คำอธิบาย: แค่ 'ดีดเปลี่ยนเส้นพอยเตอร์' ของโหนดก่อนหน้ามาชี้โหนดใหม่ทันที" : "Description: Simply re-route the pointer of the previous node.",
+          lang === 'th' ? "คำอธิบาย: เชื่อมต่อสำเร็จในพริบตาเดียวโดยไม่ต้องขยับโหนดอื่นเลย (O(1))" : "Description: Insertion complete instantly with zero shifts (O(1))."
+        ]
+      };
+      document.getElementById('statusText').innerText = descriptions[mode][animStep];
+      document.getElementById('bannerText').innerHTML = lang === 'th' ? 
+        `<strong>สเตจปัจจุบัน (${animStep}/3):</strong> ${descriptions[mode][animStep]}` :
+        `<strong>Current Stage (${animStep}/3):</strong> ${descriptions[mode][animStep]}`;
+    }
+
+    function renderStage() {
+      const stage = document.getElementById('cadStage');
+      const cy = 210;
+      let svg = '';
+
+      if (mode === 'array') {
+        svg = `
+          <text x="300" y="45" fill="#3b82f6" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">ARRAY INSERTION STATE #${animStep}</text>
+        `;
+        
+        // กำหนดตำแหน่ง X ตามสเตจจริง
+        let xArr = [75, 160, 245, 330, 415];
+        let vals = [10, 20, 30, 40, 50];
+        let labels = ["v[0]", "v[1]", "v[2]", "v[3]", "v[4]"];
+
+        if (animStep === 1) {
+          // สเตจ 1: ไฮไลต์ช่องที่จะแทรก
+          svg += `<rect x="240" y="${cy-50}" width="85" height="85" rx="8" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4 4"/>`;
+        } else if (animStep >= 2) {
+          // สเตจ 2 และ 3: ขยับขยายช่องเพื่อใส่ตัวใหม่
+          xArr = [50, 135, 220, 310, 395, 480];
+          vals = [10, 20, 99, 30, 40, 50];
+          labels = ["v[0]", "v[1]", "NEW", "v[2]", "v[3]", "v[4]"];
+        }
+
+        for (let i = 0; i < vals.length; i++) {
+          if (labels[i] === undefined) continue;
+          let isNew = labels[i] === "NEW";
+          let col = isNew ? "#10b981" : "#3b82f6";
+          let bx = xArr[i] || (50 + i * 85);
+          svg += `
+            <rect x="${bx}" y="${cy-45}" width="75" height="75" rx="6" fill="${isNew?'rgba(16, 185, 129, 0.25)':'rgba(59, 130, 246, 0.12)'}" stroke="${col}" stroke-width="2"/>
+            <text x="${bx + 37.5}" y="${cy - 20}" fill="${col}" font-size="9.5" font-weight="bold" font-family="monospace" text-anchor="middle">${labels[i]}</text>
+            <text x="${bx + 37.5}" y="${cy + 8}" fill="#fff" font-size="12" font-weight="bold" font-family="monospace" text-anchor="middle">Val: ${vals[i]}</text>
+          `;
+        }
+
+      } else {
+        svg = `
+          <text x="300" y="45" fill="#10b981" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">LINKED LIST INSERTION STATE #${animStep}</text>
+        `;
+
+        if (animStep === 0) {
+          svg += `<line x1="165" y1="${cy}" x2="255" y2="${cy}" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow)"/>`;
+          svg += `<line x1="345" y1="${cy}" x2="435" y2="${cy}" stroke="#10b981" stroke-width="2.5" marker-end="url(#arrow)"/>`;
+        } else if (animStep === 1) {
+          // สเตจ 1: แสดงโหนดใหม่ลอยอยู่ด้านล่าง
+          svg += `<line x1="165" y1="${cy}" x2="255" y2="${cy}" stroke="#10b981" stroke-width="2.5"/>`;
+          svg += `<line x1="345" y1="${cy}" x2="435" y2="${cy}" stroke="#10b981" stroke-width="2.5"/>`;
+          svg += `<rect x="255" y="${cy+50}" width="90" height="55" rx="6" fill="rgba(16, 185, 129, 0.15)" stroke="#10b981" stroke-width="2" stroke-dasharray="3 3"/>`;
+          svg += `<text x="300" y="${cy+82}" fill="#10b981" font-size="10" font-family="monospace" text-anchor="middle">Allocated [99]</text>`;
+        } else if (animStep === 2) {
+          // สเตจ 2: เส้นพอยเตอร์กำลังหักเหเปลี่ยนทาง
+          svg += `<line x1="165" y1="${cy}" x2="255" y2="${cy-50}" stroke="#f59e0b" stroke-width="2.5"/>`;
+          svg += `<line x1="345" y1="${cy-50}" x2="435" y2="${cy}" stroke="#10b981" stroke-width="2.5"/>`;
+        } else {
+          // สเตจ 3: เชื่อมต่อสมบูรณ์
+          svg += `<line x1="165" y1="${cy}" x2="255" y2="${cy}" stroke="#10b981" stroke-width="2.5"/>`;
+          svg += `<line x1="345" y1="${cy}" x2="435" y2="${cy}" stroke="#10b981" stroke-width="2.5"/>`;
+        }
+
+        const nodes = [
+          { label: "Head", val: "10", x: 75, y: cy },
+          { label: "Node 1", val: "20", x: 255, y: animStep >= 2 ? cy - 50 : cy },
+          { label: "New Node", val: "99", x: 255, y: cy + 55, show: animStep === 1 },
+          { label: "Node 2", val: "30", x: 435, y: cy }
+        ];
+
+        nodes.forEach((n) => {
+          if (n.label === "New Node" && !n.show) return;
+          const col = n.label === "New Node" ? "#10b981" : "#3b82f6";
+          svg += `
+            <rect x="${n.x}" y="${n.y - 28}" width="90" height="56" rx="6" fill="rgba(13, 21, 38, 0.95)" stroke="${col}" stroke-width="2"/>
+            <text x="${n.x + 45}" y="${n.y - 10}" fill="${col}" font-size="8.5" font-family="monospace" text-anchor="middle">${n.label}</text>
+            <text x="${n.x + 45}" y="${n.y + 12}" fill="#fff" font-size="11" font-weight="bold" font-family="monospace" text-anchor="middle">[${n.val} | •]</text>
+          `;
+        });
+      }
+
+      stage.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateStatusText();
+      renderStage();
+    });
+  </script>
+</body>
+</html>
