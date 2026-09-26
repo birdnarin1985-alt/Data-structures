@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SIAM DATA LAB - Complete Linked List Linker Engine</title>
+  <style>
+    :root {
+      --bg: #030712;
+      --panel: #0d1526;
+      --panel-border: #1e293b;
+      --text: #f8fafc;
+      --muted: #64748b;
+      --theme: #3b82f6;
+      --phi: 1.618;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Courier New", monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding-bottom: 30px;
+      overflow-x: hidden;
+    }
+
+    header {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(13, 21, 38, 0.92);
+      backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .badge-uni {
+      font-size: 9.5px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid var(--theme);
+      color: var(--theme);
+      font-weight: 900;
+      letter-spacing: 0.8px;
+      font-family: monospace;
+    }
+    
+    .lang-toggle-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--panel-border);
+      color: var(--theme);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 900;
+      font-family: monospace;
+      cursor: pointer;
+    }
+
+    .app-container {
+      width: 100%;
+      max-width: 540px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .model-switch {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+    .switch-btn {
+      height: 44px;
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      color: var(--muted);
+      border-radius: 6px;
+      font-size: 9.5px;
+      font-weight: bold;
+      font-family: monospace;
+      cursor: pointer;
+      transition: 0.2s;
+      text-align: center;
+      padding: 4px;
+    }
+    .switch-btn.active {
+      border-color: var(--theme);
+      color: #fff;
+      background: rgba(59, 130, 246, 0.15);
+      box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+    }
+
+    .cad-viewport {
+      width: 100%;
+      aspect-ratio: 1.618 / 1;
+      background: #020617;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.08);
+    }
+    svg#cadStage {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .math-hud-overlay {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .formula-card {
+      background: rgba(3, 7, 18, 0.92);
+      border: 1px solid var(--panel-border);
+      border-left: 3px solid var(--theme);
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 9.5px;
+      font-family: "Courier New", Courier, monospace;
+      max-width: 75%;
+    }
+    .formula-title {
+      font-size: 7.5px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .formula-eq {
+      color: #fff;
+      font-weight: bold;
+    }
+    .formula-eq span.hl {
+      color: var(--theme);
+      font-weight: 900;
+    }
+
+    .control-box {
+      background: var(--panel);
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .control-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      font-family: monospace;
+    }
+    .control-info span.val {
+      color: var(--theme);
+      font-weight: bold;
+    }
+
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 24px;
+      background: transparent;
+      margin: 0;
+      cursor: pointer;
+    }
+    input[type=range]:focus { outline: none; }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 6px;
+      background: #030712;
+      border: 1px solid var(--panel-border);
+      border-radius: 3px;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 20px;
+      width: 20px;
+      border-radius: 50%;
+      background: var(--theme);
+      box-shadow: 0 0 10px var(--theme);
+      cursor: pointer;
+      margin-top: -7px;
+      border: 2px solid #fff;
+    }
+
+    .pedagogy-banner {
+      background: rgba(59, 130, 246, 0.05);
+      border: 1px dashed rgba(59, 130, 246, 0.35);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 10.5px;
+      color: #bfdbfe;
+      font-family: monospace;
+      line-height: 1.4;
+    }
+    .pedagogy-banner strong {
+      color: var(--theme);
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-left">
+      <span class="badge-uni">SIAM DATA LAB</span>
+      <strong style="font-size: 11.5px;">Complete Linker Engine</strong>
+    </div>
+    <button class="lang-toggle-btn" onclick="toggleLanguage()">🌐 TH | EN</button>
+  </header>
+
+  <div class="app-container">
+    
+    <div class="model-switch">
+      <button class="switch-btn active" id="btnArr" onclick="switchMode('array')">📦 ARRAY (Deep Shift)</button>
+      <button class="switch-btn" id="btnList" onclick="switchMode('list')">🔗 LINKED LIST (Complete Link)</button>
+    </div>
+
+    <!-- Viewport ทองคำ 1:1.618 -->
+    <div class="cad-viewport">
+      <div class="math-hud-overlay">
+        <div class="formula-card">
+          <div class="formula-title" id="hudTitle">กระบวนการเชื่อมต่อโหนดสมบูรณ์</div>
+          <div class="formula-eq" id="hudDesc">ไทม์ไลน์: <span class="hl" id="progressVal">0%</span></div>
+        </div>
+      </div>
+      <svg id="cadStage" viewBox="0 0 600 370">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+          </marker>
+        </defs>
+        <g id="stageContent"></g>
+      </svg>
+    </div>
+
+    <!-- แผงควบคุมสไลด์กรอเวลาเชิงลึก -->
+    <div class="control-box">
+      <div class="control-info">
+        <span id="scrubberLabel">1. กรอเวลาข้อมูลเชิงลึก (Deep Scrub Timeline)</span>
+        <span class="val" id="scrubberPercent">0%</span>
+      </div>
+      <input type="range" id="timeSlider" min="0" max="100" value="0" oninput="onScrub(this.value)">
+
+      <div class="control-info" style="margin-top: 6px;">
+        <span id="lengthLabel">2. เพิ่มจำนวนข้อมูล (Data Length N)</span>
+        <span class="val" id="lengthVal">6 Blocks</span>
+      </div>
+      <input type="range" id="lengthSlider" min="4" max="8" value="6" oninput="onLengthChange(this.value)">
+    </div>
+
+    <div class="pedagogy-banner" id="bannerText">
+      <strong>กระบวนการเชื่อมต่อ:</strong> กรอสไลด์ไปจนถึง 100% เพื่อดูจังหวะที่โหนดใหม่ (99) เชื่อมต่อเข้ากับห่วงโซ่ Linked List อย่างสมบูรณ์แบบ
+    </div>
+
+  </div>
+
+  <script>
+    let mode = 'array';
+    let lang = 'th';
+    let progress = 0;
+    let dataLength = 6;
+
+    function toggleLanguage() {
+      lang = (lang === 'th') ? 'en' : 'th';
+      document.querySelector('.lang-toggle-btn').innerText = lang === 'th' ? '🌐 TH | EN' : '🌐 EN | TH';
+      if (lang === 'th') {
+        document.getElementById('btnArr').innerText = "📦 ARRAY (Deep Shift)";
+        document.getElementById('btnList').innerText = "🔗 LINKED LIST (Complete Link)";
+        document.getElementById('hudTitle').innerText = "กระบวนการเชื่อมต่อโหนดสมบูรณ์";
+        document.getElementById('scrubberLabel').innerText = "1. กรอเวลาข้อมูลเชิงลึก (Deep Scrub Timeline)";
+        document.getElementById('lengthLabel').innerText = "2. เพิ่มจำนวนข้อมูล (Data Length N)";
+        document.getElementById('bannerText').innerHTML = "<strong>กระบวนการเชื่อมต่อ:</strong> กรอสไลด์ไปจนถึง 100% เพื่อดูจังหวะที่โหนดใหม่ (99) เชื่อมต่อเข้ากับห่วงโซ่ Linked List อย่างสมบูรณ์แบบ";
+      } else {
+        document.getElementById('btnArr').innerText = "📦 ARRAY (Deep Shift)";
+        document.getElementById('btnList').innerText = "🔗 LINKED LIST (Complete Link)";
+        document.getElementById('hudTitle').innerText = "Complete Node Linker";
+        document.getElementById('scrubberLabel').innerText = "1. Deep Scrub Timeline";
+        document.getElementById('lengthLabel').innerText = "2. Data Length (N Elements)";
+        document.getElementById('bannerText').innerHTML = "<strong>Complete Link:</strong> Scrub to 100% to see the new node (99) fully integrated into the linked list chain.";
+      }
+      renderStage();
+    }
+
+    function switchMode(m) {
+      mode = m;
+      progress = 0;
+      document.getElementById('timeSlider').value = 0;
+      document.getElementById('btnArr').classList.toggle('active', m === 'array');
+      document.getElementById('btnList').classList.toggle('active', m === 'list');
+      renderStage();
+    }
+
+    function onScrub(val) {
+      progress = parseFloat(val);
+      document.getElementById('progressVal').innerText = `${Math.round(progress)}%`;
+      document.getElementById('scrubberPercent').innerText = `${Math.round(progress)}%`;
+      renderStage();
+    }
+
+    function onLengthChange(val) {
+      dataLength = parseInt(val);
+      document.getElementById('lengthVal').innerText = `${dataLength} Blocks`;
+      renderStage();
+    }
+
+    function renderStage() {
+      const container = document.getElementById('stageContent');
+      const cy = 210;
+      let svg = '';
+      const p = progress / 100;
+
+      const availableWidth = 500;
+      const boxW = Math.max(30, Math.min(65, (availableWidth / dataLength) - 8));
+      const boxH = boxW * 1.1;
+      const totalSpan = dataLength * (boxW + 6);
+      const startX = (600 - totalSpan) / 2;
+
+      if (mode === 'array') {
+        svg += `<text x="300" y="45" fill="#3b82f6" font-size="10.5" font-weight="bold" font-family="monospace" text-anchor="middle">ARRAY DEEP SHIFT PROCESS (N = ${dataLength}, O(N))</text>`;
+        
+        const insertIdx = Math.floor(dataLength / 2);
+        let newOpacity = 0;
+        let liftY = 0;
+        if (p > 0.3 && p <= 0.7) {
+          liftY = -35;
+        } else if (p > 0.7) {
+          liftY = 0;
+          newOpacity = (p - 0.7) / 0.3;
+        }
+
+        for (let i = 0; i < dataLength; i++) {
+          let basePositionX = startX + (i * (boxW + 6));
+          let currentX = basePositionX;
+          let currentY = cy - boxH/2;
+          let currentOpacity = 1;
+
+          if (i >= insertIdx) {
+            let shiftProgress = Math.max(0, (p - 0.2) / 0.8);
+            currentX += shiftProgress * (boxW + 12);
+            if (p > 0.3 && p <= 0.7) {
+              currentY += liftY;
+            }
+          }
+
+          let isTarget = i === insertIdx;
+          let col = isTarget && p < 0.3 ? "#f59e0b" : "#3b82f6";
+
+          svg += `
+            <g transform="translate(${currentX}, ${currentY})" opacity="${currentOpacity}">
+              <rect width="${boxW}" height="${boxH}" rx="5" fill="rgba(59, 130, 246, 0.12)" stroke="${col}" stroke-width="1.8"/>
+              <text x="${boxW/2}" y="${boxH*0.4}" fill="${col}" font-size="${Math.max(7, boxW*0.18)}" font-weight="bold" font-family="monospace" text-anchor="middle">v[${i}]</text>
+              <text x="${boxW/2}" y="${boxH*0.75}" fill="#fff" font-size="${Math.max(8, boxW*0.22)}" font-weight="bold" font-family="monospace" text-anchor="middle">${(i+1)*10}</text>
+            </g>
+          `;
+        }
+
+        if (newOpacity > 0.01) {
+          let newX = startX + (insertIdx * (boxW + 6));
+          let dropY = (cy - boxH/2) - (1.0 - newOpacity) * 50;
+          svg += `
+            <g transform="translate(${newX}, ${dropY})" opacity="${newOpacity}">
+              <rect width="${boxW}" height="${boxH}" rx="5" fill="rgba(16, 185, 129, 0.25)" stroke="#10b981" stroke-width="2"/>
+              <text x="${boxW/2}" y="${boxH*0.4}" fill="#10b981" font-size="${Math.max(7, boxW*0.18)}" font-weight="bold" font-family="monospace" text-anchor="middle">NEW</text>
+              <text x="${boxW/2}" y="${boxH*0.75}" fill="#fff" font-size="${Math.max(8, boxW*0.22)}" font-weight="bold" font-family="monospace" text-anchor="middle">99</text>
+            </g>
+          `;
+        }
+
+      } else {
+        svg += `<text x="300" y="45" fill="#10b981" font-size="10.5" font-weight="bold" font-family="monospace" text-anchor="middle">LINKED LIST COMPLETE LINKING (N = ${dataLength}, O(1))</text>`;
+
+        const nodeW = Math.max(45, Math.min(75, (480 / dataLength) - 12));
+        const nodeH = nodeW * 0.65;
+        const spacing = (480 - (dataLength * nodeW)) / (dataLength - 1);
+        const nodeStartX = 60;
+
+        // ปรับไทม์ไลน์ Linked List ให้สมบูรณ์ถึง 100%:
+        // p: 0.0 -> 0.3 (สถานะตั้งต้น)
+        // p: 0.3 -> 0.6 (Node 1 ยกลอยตัวขึ้น)
+        // p: 0.6 -> 0.85 (โหนดใหม่ 99 ปรากฏขึ้นตรงกลางด้านล่าง)
+        // p: 0.85 -> 1.0 (เส้นพอยเตอร์เชื่อมต่อ Node 0 -> New -> Node 1 อย่างสมบูรณ์แบบ)
+
+        let node1Y = cy;
+        let newOpacity = 0;
+        let finalConnected = p >= 0.85;
+
+        if (p > 0.3 && p <= 0.6) {
+          node1Y = cy - 60 * ((p - 0.3) / 0.3);
+        } else if (p > 0.6) {
+          node1Y = cy - 60;
+          newOpacity = Math.min(1, (p - 0.6) / 0.25);
+        }
+
+        // จัดการตำแหน่ง X ของโหนดเมื่อเชื่อมต่อเสร็จที่ 100%
+        for (let i = 0; i < dataLength; i++) {
+          let nx = nodeStartX + (i * (nodeW + spacing));
+          let ny = cy;
+          if (i === 1) ny = node1Y;
+
+          // วาดเส้นพอยเตอร์ปกติระหว่างโหนด
+          if (i < dataLength - 1) {
+            let nextNx = nodeStartX + ((i + 1) * (nodeW + spacing));
+            let nextNy = (i + 1 === 1) ? node1Y : cy;
+
+            // ถ้าอยู่ในช่วงเชื่อมต่อสมบูรณ์ (p >= 0.85) ให้แทรกเส้นพอยเตอร์ผ่านโหนดใหม่ (99)
+            if (i === 0 && finalConnected) {
+              // Node 0 ชี้ไปที่ New Node
+              let newXPos = nodeStartX + nodeW + (spacing / 2);
+              svg += `<line x1="${nx + nodeW}" y1="${ny}" x2="${newXPos - 5}" y2="${cy + 40}" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>`;
+              // New Node ชี้ไปที่ Node 1
+              svg += `<line x1="${newXPos + nodeW - 5}" y1="${cy + 40}" x2="${nextNx}" y2="${nextNy}" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>`;
+            } else if (i === 0 && p > 0.6) {
+              // จังหวะกำลังหักเหพอยเตอร์
+              svg += `<line x1="${nx + nodeW}" y1="${ny}" x2="${nodeStartX + nodeW + spacing/2}" y2="${cy + 40}" stroke="#f59e0b" stroke-width="2"/>`;
+            } else {
+              svg += `<line x1="${nx + nodeW}" y1="${ny}" x2="${nextNx}" y2="${nextNy}" stroke="#10b981" stroke-width="2" marker-end="url(#arrow)"/>`;
+            }
+          }
+
+          let col = i === 1 ? "#f59e0b" : "#3b82f6";
+          svg += `
+            <g transform="translate(${nx}, ${ny - nodeH/2})">
+              <rect width="${nodeW}" height="${nodeH}" rx="5" fill="rgba(13, 21, 38, 0.95)" stroke="${col}" stroke-width="1.8"/>
+              <text x="${nodeW/2}" y="${nodeH*0.4}" fill="${col}" font-size="${Math.max(7, nodeW*0.16)}" font-family="monospace" text-anchor="middle">Node ${i}</text>
+              <text x="${nodeW/2}" y="${nodeH*0.78}" fill="#fff" font-size="${Math.max(8, nodeW*0.22)}" font-weight="bold" font-family="monospace" text-anchor="middle">[${(i+1)*10}|•]</text>
+            </g>
+          `;
+        }
+
+        // แสดงโหนดใหม่ (99) ที่แทรกอยู่ตรงกลางด้านล่างเมื่อสไลด์เกิน 60% ถึง 100%
+        if (newOpacity > 0.01) {
+          let newNodeX = nodeStartX + nodeW + (spacing / 2) - (nodeW / 2);
+          svg += `
+            <g transform="translate(${newNodeX}, ${cy + 40 - nodeH/2})" opacity="${newOpacity}">
+              <rect width="${nodeW}" height="${nodeH}" rx="5" fill="rgba(16, 185, 129, 0.2)" stroke="#10b981" stroke-width="2"/>
+              <text x="${nodeW/2}" y="${nodeH*0.4}" fill="#10b981" font-size="${Math.max(7, nodeW*0.16)}" font-family="monospace" text-anchor="middle">New</text>
+              <text x="${nodeW/2}" y="${nodeH*0.78}" fill="#fff" font-size="${Math.max(8, nodeW*0.22)}" font-weight="bold" font-family="monospace" text-anchor="middle">[99|•]</text>
+            </g>
+          `;
+        }
+      }
+
+      container.innerHTML = svg;
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      renderStage();
+    });
+  </script>
+</body>
+</html>
